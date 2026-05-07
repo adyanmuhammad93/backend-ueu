@@ -46,6 +46,7 @@ export async function registerDocs(app: FastifyInstance) {
       role: { type: 'string', enum: ['student', 'instructor', 'admin'] },
       avatarUrl: { type: 'string', nullable: true },
       geminiApiKey: { type: 'string', nullable: true },
+      enrolledCourseIds: { type: 'array', items: { type: 'string', format: 'uuid' } },
     },
   });
 

@@ -58,9 +58,7 @@ export const authService = {
     const refreshToken = await jwtService.createRefreshToken(user.id);
 
     // Fetch enrolled course IDs
-    const enrollments = await db('enrollments')
-      .where({ user_id: user.id })
-      .select('course_id');
+    const enrollments = await getActiveEnrollmentCourseIds(user.id);
 
     return {
       user: { ...mapUser(user), enrolledCourseIds: enrollments.map((e: any) => e.course_id) },
@@ -73,9 +71,7 @@ export const authService = {
     const user = await db('users').where({ id: userId }).first();
     if (!user) throw new NotFoundError('User');
 
-    const enrollments = await db('enrollments')
-      .where({ user_id: userId })
-      .select('course_id');
+    const enrollments = await getActiveEnrollmentCourseIds(userId);
 
     return {
       ...mapUser(user),
@@ -118,7 +114,7 @@ export const authService = {
     const user = await db('users').where({ id: targetUserId }).first();
     if (!user) throw new NotFoundError('User');
 
-    const enrollments = await db('enrollments').where({ user_id: targetUserId }).select('course_id');
+    const enrollments = await getActiveEnrollmentCourseIds(targetUserId);
 
     // Issue a special short-lived access token for impersonation
     const accessToken = jwtService.signAccessToken({ sub: user.id, email: user.email, role: user.role });
@@ -139,4 +135,11 @@ function mapUser(user: any) {
     avatarUrl: user.avatar_url || null,
     geminiApiKey: user.gemini_api_key || null,
   };
+}
+
+
+async function getActiveEnrollmentCourseIds(userId: string) {
+  return db('enrollments')
+    .where({ user_id: userId, status: 'active' })
+    .select('course_id');
 }
